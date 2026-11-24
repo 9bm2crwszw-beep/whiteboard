@@ -369,10 +369,10 @@ a.menuitem{text-decoration:none;color:inherit;box-sizing:border-box}
         <li><b>Formen begradigen</b>: Gerade, Dreieck, Viereck oder Kreis zeichnen und am Ende den Stift kurz (ca. ½ Sekunde) auf dem Display halten – die Form wird sauber begradigt (Rechtecke und Quadrate werden erkannt). Ohne abzusetzen lässt sich anschließend die Größe bzw. Länge ändern. Abschaltbar im Stift-Fenster.</li>
         <li><b>Radierer</b>: wahlweise ganze Striche und Formen löschen oder präzise nur die überfahrenen Stellen.</li>
         <li><b>Einrasten</b>: Nullpunkt des Geodreiecks sowie Einstich und Bleistift des Zirkels rasten leicht an Kästchen-Schnittpunkten bzw. Punkten des Hintergrunds ein – und stärker an Endpunkten von Strichen, Kreismittelpunkten, Ecken von Formen und Schnittpunkten von Linien und Kreisbögen. Ein roter Ring zeigt den gefangenen Punkt. Etwas weiter daneben bleibt freies Ansetzen möglich.</li>
+        <li><b>Ausblenden</b>: Geodreieck und Zirkel haben einen roten ×-Knopf direkt am Werkzeug (Geodreieck über der Spitze, Zirkel neben der Radius-Anzeige).</li>
         <li><b>Zirkel</b> (über das Geodreieck-Symbol): Mittelpunkt am Kreuz verschieben, Radius am mittleren Griff einstellen (in mm-Schritten) oder auf die Radius-Anzeige tippen und eintippen, am blauen Stift-Griff ziehen zum Zeichnen. Die Kästchen des karierten Hintergrunds sind genau 0,5 cm groß.</li>
         <li><b>Text / Notizzettel</b>: auf die Fläche tippen (mit Stift oder Finger), dann schreiben. Ein weiterer Tipp an anderer Stelle legt sofort das nächste Feld an.</li>
         <li><b>Mathe-Werkzeuge</b>: Grafikrechner, Geometrie, 3D, CAS und Taschenrechner von GeoGebra.</li>
-        <li><b>Glättung</b>: im Stift-Fenster einstellbar (Aus / Normal / Stark), gilt für Stift und Textmarker.</li>
         <li><b>Geodreieck</b>: über das Symbol mit Geodreieck und Zirkel; Größe über den Griff an der Spitze oder mit zwei Fingern ändern; mit einem Finger verschieben, mit zwei Fingern drehen (oder an den runden Griffen). Wer mit dem Stift oder Textmarker an einer Kante entlangfährt, zeichnet eine gerade Linie. Taste <kbd>G</kbd> blendet es ein und aus.</li>
         <li><b>Timer, Stoppuhr, Uhr</b> (Uhr-Symbol) und <b>QR-Code</b> (QR-Symbol) und <b>Taschenrechner</b> (auch per Tastatur bedienbar): liegen über der Zeichnung und sind mit jedem Werkzeug bedienbar. An der Kopfzeile verschieben, unten rechts vergrößern. Beim Timer auf die Zeit tippen, um sie frei einzugeben.</li>
       </ul>
@@ -3269,8 +3269,6 @@ function sizes(list, cur, dotScale = 1, max = 26) {
 function updateOptions() {
   const o = $('#options'), t = S.tool; let h = '';
   if (t === 'pen') h = `<div class="opt-title">Stift</div>${swatches(PEN_COLORS, S.pen.color, 'color')}${sizes(SIZES.pen, S.pen.size, 1.5)}
-     <div class="opt-title" style="margin-top:4px">Glättung</div>
-     <div class="opt-seg">${['Aus', 'Normal', 'Stark'].map((l, i) => `<button data-smooth="${i}" class="${S.pen.smooth === i ? 'sel' : ''}">${l}</button>`).join('')}</div>
      <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="shapeChk" ${S.pen.shapes ? 'checked' : ''}> Formen begradigen (am Ende kurz halten)</label>
      <label class="toggle"><input type="checkbox" id="prChk" ${S.pen.pressure ? 'checked' : ''}> Druckempfindlich (Apple Pencil)</label>`;
   else if (t === 'hl') h = `<div class="opt-title">Textmarker</div>${swatches(HL_COLORS, S.hl.color, 'color')}${sizes(SIZES.hl, S.hl.size, 0.7)}`;
@@ -3311,7 +3309,6 @@ $('#options').addEventListener('click', e => {
   if (b.dataset.kind) S.shape.kind = b.dataset.kind;
   if (b.dataset.axscale) S.shape.axScale = b.dataset.axscale === '1';
   if (b.dataset.emode) { S.eraser.mode = b.dataset.emode; try { localStorage.setItem('mz-wb-emode', b.dataset.emode); } catch (e) {} }
-  if (b.dataset.smooth) { S.pen.smooth = +b.dataset.smooth; try { localStorage.setItem('mz-wb-smooth', b.dataset.smooth); } catch (e) {} }
   if (b.id === 'clearInk') {
     if (page().items.some(i => !isDom(i))) { pushHistory(); page().items = page().items.filter(isDom); inkDirty = true; requestDraw(); scheduleSave(); toast('Zeichnungen gelöscht – mit „Rückgängig“ wiederherstellbar.'); }
   }
@@ -3403,7 +3400,8 @@ function buildGeo(k) {
     <path d="M-30 0A30 30 0 0 1 30 0M0 -8V0M-6 -3H6" fill="none" stroke="#1f3f6e" stroke-width=".6" ${NS} pointer-events="none"/>
     <path d="M0 -28V${(ay + 8).toFixed(1)}" stroke="#1f3f6e" stroke-width=".45" ${NS} stroke-dasharray="3 3" pointer-events="none"/>
     <text id="geoAngle" x="0" y="${ay.toFixed(1)}" font-size="16" font-weight="700">0°</text>
-    ${rot(-h + 42)}${rot(h - 42)}${scl}`;
+    ${rot(-h + 42)}${rot(h - 42)}${scl}
+    <g class="geo-rot" data-close="1" style="cursor:pointer" transform="translate(0 ${-h - 22})"><title>Geodreieck ausblenden</title><circle r="12" fill="#fff" stroke="#c8102e" stroke-width="1.3"/><path d="M-4.5-4.5l9 9M4.5-4.5l-9 9" stroke="#c8102e" stroke-width="1.8" stroke-linecap="round" pointer-events="none"/></g>`;
 }
 buildGeo(1);
 function geoState() { return page().geo; }
@@ -3469,6 +3467,7 @@ function snapPoint(sn, x, y, size) {
   }
   function magnet(a) { let r = Math.round(a); const n = Math.round(r / 15) * 15; if (Math.abs(r - n) <= 2) r = n; return r; }
   geoSvg.addEventListener('pointerdown', e => {
+    if (e.target.closest('[data-close]')) { e.preventDefault(); e.stopPropagation(); toggleGeo(); return; }
     const body = e.target.closest('.geo-body'), rot = e.target.closest('[data-rot]'), scl = e.target.closest('[data-scale]');
     if (!body && !rot && !scl) return;
     if (body && e.pointerType === 'pen' && (S.tool === 'pen' || S.tool === 'hl')) return; // Stift zeichnet am Lineal
@@ -3630,6 +3629,7 @@ function layoutComp() {
     <g class="ch" data-c="move" transform="translate(${cx} ${cy})"><title>Mittelpunkt verschieben</title><circle r="24" fill="rgba(46,99,174,.06)" stroke="#2e63ae" stroke-width="1.2" stroke-opacity=".7"/><path d="M0-21V-5M0 5V21M-21 0H-5M5 0H21" stroke="#2e63ae" stroke-width="1" stroke-opacity=".75" fill="none"/><path d="M0-21l-3.5 4M0-21l3.5 4M0 21l-3.5-4M0 21l3.5-4M-21 0l4-3.5M-21 0l4 3.5M21 0l-4-3.5M21 0l-4 3.5" stroke="#2e63ae" stroke-width="1.4" stroke-opacity=".8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle r="2.2" fill="#c8102e"/></g>
     <g class="ch" data-c="radius" transform="translate(${mx} ${my}) rotate(${deg})"><rect x="-13" y="-9" width="26" height="18" rx="5" fill="#fff" stroke="#2e63ae" stroke-width="1.5"/><path d="M-7 0h14M-7 0l3-3M-7 0l3 3M7 0l-3-3M7 0l-3 3" stroke="#2e63ae" stroke-width="1.4" fill="none" stroke-linecap="round"/></g>
     <g class="ch" data-c="draw" transform="translate(${tx} ${ty})"><circle r="17" fill="#2e63ae" stroke="#fff" stroke-width="2"/><path d="M-6 6l1.5-4.5 6.5-6.5 3 3-6.5 6.5z" fill="#fff"/></g>
+    <g class="ch" data-c="close" style="cursor:pointer" transform="translate(${cx + 66} ${cy - 40})"><title>Zirkel ausblenden</title><circle r="12" fill="#fff" stroke="#c8102e" stroke-width="1.3"/><path d="M-4.5-4.5l9 9M4.5-4.5l-9 9" stroke="#c8102e" stroke-width="1.8" stroke-linecap="round" pointer-events="none"/></g>
     <g class="ch" data-c="edit" style="cursor:pointer" transform="translate(${cx} ${cy - 38})"><title>Radius eingeben</title><rect x="-48" y="-13" width="96" height="22" rx="6" fill="#fff" stroke="#2e63ae" stroke-width="1"/><text x="-8" y="3" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f3f6e">r = ${cmTxt}</text><path d="M35 -4l4 4M32 3l1-3 6-6 3 3-6 6z" fill="none" stroke="#2e63ae" stroke-width="1.1" stroke-linejoin="round"/></g>`;
 }
 (function compGestures() {
@@ -3638,6 +3638,7 @@ function layoutComp() {
   compSvg.addEventListener('pointerdown', e => {
     const h = e.target.closest('[data-c]'); if (!h) return;
     e.preventDefault(); e.stopPropagation(); closePanels(true);
+    if (h.dataset.c === 'close') { toggleComp(); return; }
     try { compSvg.setPointerCapture(e.pointerId); } catch (_) {}
     const c = page().comp, w = toWorld(e.clientX, e.clientY), mode = h.dataset.c;
     if (mode === 'move') cg = { mode, id: e.pointerId, ox: c.x - w.x, oy: c.y - w.y, targets: snapGeometry() };
@@ -4215,7 +4216,7 @@ if (location.hash === '#wb-transfer' && window.opener) {
 try { if (localStorage.getItem('mz-wb-shapes') === '0') S.pen.shapes = false; } catch (e) {}
 if (!IS_IOS) { $('#fingerLabel').style.display = 'none'; $('#fingerSeg').style.display = 'none'; }
 try { const em = localStorage.getItem('mz-wb-emode'); if (em === 'precise' || em === 'stroke') S.eraser.mode = em; } catch (e) {}
-try { const sm = localStorage.getItem('mz-wb-smooth'); if (sm !== null) S.pen.smooth = clamp(+sm || 0, 0, 2); } catch (e) {}
+S.pen.smooth = IS_IOS ? 1 : 0; // Glättung fest: iPad „normal“, interaktive Tafeln/Windows/Android aus
 window.addEventListener('resize', resize);
 if (window.visualViewport) visualViewport.addEventListener('resize', resize);
 try {
